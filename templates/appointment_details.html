@@ -1,0 +1,65 @@
+<!-- templates/appointment_details.html -->
+{% extends 'base.html' %}
+
+{% block title %}Appointment Details - Doctor Appointment System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4>Appointment Details</h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Appointment Date:</div>
+                    <div class="col-md-8">{{ appointment.date.strftime('%Y-%m-%d') }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Time Slot:</div>
+                    <div class="col-md-8">{{ appointment.time_slot }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Doctor:</div>
+                    <div class="col-md-8">{{ appointment.doctor_name }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Patient:</div>
+                    <div class="col-md-8">{{ appointment.patient_name }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Reason for Visit:</div>
+                    <div class="col-md-8">{{ appointment.reason }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Status:</div>
+                    <div class="col-md-8">
+                        {% if appointment.status == 'scheduled' %}
+                            <span class="badge bg-success">Scheduled</span>
+                        {% elif appointment.status == 'cancelled' %}
+                            <span class="badge bg-danger">Cancelled</span>
+                        {% elif appointment.status == 'completed' %}
+                            <span class="badge bg-info">Completed</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if appointment.notes %}
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Doctor's Notes:</div>
+                    <div class="col-md-8">{{ appointment.notes }}</div>
+                </div>
+                {% endif %}
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+                    {% if appointment.status == 'scheduled' and session.role == 'patient' %}
+                        <form method="POST" action="{{ url_for('cancel_appointment', appointment_id=appointment._id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this appointment?')">Cancel Appointment</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

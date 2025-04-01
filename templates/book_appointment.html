@@ -1,0 +1,135 @@
+<!-- templates/book_appointment.html -->
+{% extends 'base.html' %}
+
+{% block title %}Book Appointment - Doctor Appointment System{% endblock %}
+
+{% block content %}
+<h2>Book an Appointment</h2>
+<p>Select a date and time to schedule your appointment with {{ doctor_name }}.</p>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>Select Date and Time</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('book_appointment') }}" id="appointmentForm">
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Appointment Date</label>
+                        <select class="form-select" id="date" name="date" required>
+                            <option value="" selected disabled>Select a date</option>
+                            {% for date in available_dates %}
+                                <option value="{{ date }}">{{ date }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Select Time Slot</label>
+                        <div id="timeSlots" class="d-flex flex-wrap">
+                            {% for slot in time_slots %}
+                                <div class="appointment-slot" data-slot="{{ slot }}">
+                                    {{ slot }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" id="time_slot" name="time_slot" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Reason for Visit</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Book Appointment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>Doctor Information</h4>
+            </div>
+            <div class="card-body">
+                <h5>{{ doctor_name }}</h5>
+                <p>Specialty: {{ doctor_specialty }}</p>
+                <p>Available hours: Monday to Friday, 9 AM to 5 PM</p>
+                <p>Each appointment slot is 1 hour long.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Store booked slots data as JavaScript object
+    const bookedSlots = JSON.parse('{{ booked_slots|tojson|safe }}');
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateSelect = document.getElementById('date');
+        const timeSlots = document.querySelectorAll('.appointment-slot');
+        const timeSlotInput = document.getElementById('time_slot');
+        
+        // Update time slots based on selected date
+        dateSelect.addEventListener('change', function() {
+            const selectedDate = this.value;
+            const bookedSlotsForDate = bookedSlots[selectedDate] || [];
+            
+            // Reset all slots
+            timeSlots.forEach(slot => {
+                slot.classList.remove('booked');
+                slot.classList.remove('selected');
+            });
+            
+            // Mark booked slots
+            timeSlots.forEach(slot => {
+                const slotTime = slot.getAttribute('data-slot');
+                if (bookedSlotsForDate.includes(slotTime)) {
+                    slot.classList.add('booked');
+                }
+            });
+            
+            // Clear selected time
+            timeSlotInput.value = '';
+        });
+        
+        // Handle time slot selection
+        timeSlots.forEach(slot => {
+            slot.addEventListener('click', function() {
+                const selectedDate = dateSelect.value;
+                if (!selectedDate) {
+                    alert('Please select a date first');
+                    return;
+                }
+                
+                const slotTime = this.getAttribute('data-slot');
+                const bookedSlotsForDate = bookedSlots[selectedDate] || [];
+                
+                if (bookedSlotsForDate.includes(slotTime)) {
+                    alert('This slot is already booked');
+                    return;
+                }
+                
+                // Clear previous selection
+                timeSlots.forEach(s => s.classList.remove('selected'));
+                
+                // Mark as selected
+                this.classList.add('selected');
+                timeSlotInput.value = slotTime;
+            });
+        });
+        
+        // Form validation
+        document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+            if (!timeSlotInput.value) {
+                e.preventDefault();
+                alert('Please select a time slot');
+            }
+        });
+    });
+</script>
+{% endblock %}

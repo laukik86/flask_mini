@@ -1,11 +1,63 @@
+<!-- templates/base.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>{% block title %}Doctor Appointment System{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container { max-width: 960px; }
+        .header { padding: 1rem 0; border-bottom: 1px solid #e5e5e5; }
+        .footer { padding: 1rem 0; border-top: 1px solid #e5e5e5; margin-top: 2rem; }
+        .card { margin-bottom: 1.5rem; }
+        .appointment-slot { cursor: pointer; padding: 0.5rem; border: 1px solid #ddd; margin: 0.2rem; }
+        .appointment-slot.booked { background-color: #f8d7da; cursor: not-allowed; }
+        .appointment-slot.selected { background-color: #d4edda; }
+    </style>
 </head>
 <body>
-    
+    <div class="container">
+        <header class="header d-flex flex-wrap justify-content-between py-3 mb-4">
+            <a href="/" class="d-flex align-items-center mb-3 mb-md-0 text-dark text-decoration-none">
+                <span class="fs-4">Doctor Appointment System</span>
+            </a>
+            <ul class="nav nav-pills">
+                <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
+                {% if 'user_id' in session %}
+                    <li class="nav-item"><a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a></li>
+                    <li class="nav-item"><a href="{{ url_for('book_appointment') }}" class="nav-link">Book Appointment</a></li>
+                    <li class="nav-item"><a href="{{ url_for('logout') }}" class="nav-link">Logout</a></li>
+                {% else %}
+                    <li class="nav-item"><a href="{{ url_for('login') }}" class="nav-link">Login</a></li>
+                    <li class="nav-item"><a href="{{ url_for('register') }}" class="nav-link">Register</a></li>
+                {% endif %}
+            </ul>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+
+        <footer class="footer text-muted py-3">
+            <div class="container">
+                <p class="float-end mb-1">
+                    <a href="#">Back to top</a>
+                </p>
+                <p class="mb-1">© 2025 Doctor Appointment System</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>
