@@ -1,5 +1,3 @@
-# app.py
-
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_pymongo import PyMongo
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -7,13 +5,11 @@ from datetime import datetime, timedelta
 from bson.objectid import ObjectId
 import os
 from functools import wraps
-import urllib.parse
+
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-
-
-app.config["MONGO_URI"] = "mongodb+srv://laukik:Boka123@cluster0.ycz62gh.mongodb.net/"
+app.config["MONGO_URI"] = "mongodb+srv://laukik1:okokok@cluster0.y21lotg.mongodb.net/Doctor_Appointment"
 
 
 mongo = PyMongo(app)
@@ -25,7 +21,7 @@ print("MongoDB URI:", app.config["MONGO_URI"])
 print("MongoDB Connection:", mongo.db)
 
 # Constants
-DOCTOR_NAME = "Dr. Jane Smith"
+DOCTOR_NAME = "Dr. Prabhaker Patil"
 DOCTOR_SPECIALTY = "General Physician"
 APPOINTMENT_SLOTS = ["09:00 AM", "10:00 AM", "11:00 AM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM"]
 
@@ -218,7 +214,80 @@ def cancel_appointment(appointment_id):
     
     flash('Appointment cancelled successfully', 'success')
     return redirect(url_for('dashboard'))
-
+# Update appointment route
+@app.route('/update_appointment/<appointment_id>', methods=['GET', 'POST'])
+@login_required
+def update_appointment(appointment_id):
+    # Get the appointment
+    appointment = appointments.find_one({'_id': ObjectId(appointment_id)})
+    
+    if not appointment:
+        flash('Appointment not found', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    # Check if the user is authorized to update this appointment
+    if session['role'] == 'patient' and appointment['patient_id'] != session['user_id']:
+        flash('You are not authorized to update this appointment', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    # Check if appointment is already cancelled or completed
+    if appointment['status'] != 'scheduled':
+        flash('Only scheduled appointments can be updated', 'warning')
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        date_str = request.form.get('date')
+        time_slot = request.form.get('time_slot')
+        reason = request.form.get('reason')
+        
+        # Convert date string to datetime object
+        appointment_date = datetime.strptime(date_str, '%Y-%m-%d')
+        
+        # Check if the appointment slot is available (excluding this appointment)
+        existing_appointment = appointments.find_one({
+            '_id': {'$ne': ObjectId(appointment_id)},
+            'date': appointment_date,
+            'time_slot': time_slot
+        })
+        
+        if existing_appointment:
+            flash('This appointment slot is already booked', 'danger')
+            return redirect(url_for('update_appointment', appointment_id=appointment_id))
+        
+        # Update appointment
+        appointments.update_one(
+            {'_id': ObjectId(appointment_id)},
+            {'$set': {
+                'date': appointment_date,
+                'time_slot': time_slot,
+                'reason': reason,
+                'updated_at': datetime.now()
+            }}
+        )
+        
+        flash('Appointment updated successfully', 'success')
+        return redirect(url_for('dashboard'))
+    
+    # Calculate available dates (next 30 days)
+    today = datetime.now().date()
+    available_dates = [(today + timedelta(days=i)).strftime('%Y-%m-%d') for i in range(1, 31)]
+    
+    # Get already booked slots
+    booked_slots = {}
+    for date in available_dates:
+        date_obj = datetime.strptime(date, '%Y-%m-%d')
+        # Exclude the current appointment from booked slots
+        booked_appointments = list(appointments.find({
+            '_id': {'$ne': ObjectId(appointment_id)},
+            'date': date_obj
+        }))
+        booked_slots[date] = [app['time_slot'] for app in booked_appointments]
+    
+    return render_template('update_appointment.html', 
+                          appointment=appointment,
+                          available_dates=available_dates, 
+                          time_slots=APPOINTMENT_SLOTS,
+                          booked_slots=booked_slots)
 # Admin routes (if you want to add admin functionality)
 @app.route('/admin/appointments')
 @login_required

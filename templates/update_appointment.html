@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Update Appointment - Doctor Appointment System{% endblock %}
+
+{% block content %}
+<h2>Update Appointment</h2>
+<p>Change the date, time, or reason for your appointment with {{ appointment.doctor_name }}.</p>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>Select New Date and Time</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('update_appointment', appointment_id=appointment._id) }}" id="updateAppointmentForm">
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Appointment Date</label>
+                        <select class="form-select" id="date" name="date" required>
+                            <option value="" disabled>Select a date</option>
+                            {% for date in available_dates %}
+                                <option value="{{ date }}" {% if date == appointment.date.strftime('%Y-%m-%d') %}selected{% endif %}>{{ date }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Select Time Slot</label>
+                        <div id="timeSlots" class="d-flex flex-wrap">
+                            {% for slot in time_slots %}
+                                <div class="appointment-slot {% if slot == appointment.time_slot %}selected{% endif %}" data-slot="{{ slot }}">
+                                    {{ slot }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" id="time_slot" name="time_slot" value="{{ appointment.time_slot }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Reason for Visit</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" required>{{ appointment.reason }}</textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Update Appointment</button>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>Current Appointment</h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Date:</div>
+                    <div class="col-md-8">{{ appointment.date.strftime('%Y-%m-%d') }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Time:</div>
+                    <div class="col-md-8">{{ appointment.time_slot }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Doctor:</div>
+                    <div class="col-md-8">{{ appointment.doctor_name }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Reason:</div>
+                    <div class="col-md-8">{{ appointment.reason }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Store booked slots data as JavaScript object
+    const bookedSlots = JSON.parse('{{ booked_slots|tojson|safe }}');
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateSelect = document.getElementById('date');
+        const timeSlots = document.querySelectorAll('.appointment-slot');
+        const timeSlotInput = document.getElementById('time_slot');
+        
+        // Update time slots based on selected date
+        function updateTimeSlots() {
+            const selectedDate = dateSelect.value;
+            const bookedSlotsForDate = bookedSlots[selectedDate] || [];
+            
+            // Reset all slots
+            timeSlots.forEach(slot => {
+                slot.classList.remove('booked');
+                // Don't remove selected class here
+            });
+            
+            // Mark booked slots
+            timeSlots.forEach(slot => {
+                const slotTime = slot.getAttribute('data-slot');
+                if (bookedSlotsForDate.includes(slotTime)) {
+                    slot.classList.add('booked');
+                }
+            });
+        }
+        
+        // Initial update of time slots
+        updateTimeSlots();
+        
+        // Update time slots when date changes
+        dateSelect.addEventListener('change', function() {
+            updateTimeSlots();
+            
+            // Clear selected time
+            timeSlots.forEach(slot => {
+                slot.classList.remove('selected');
+            });
+            timeSlotInput.value = '';
+        });
+        
+        // Handle time slot selection
+        timeSlots.forEach(slot => {
+            slot.addEventListener('click', function() {
+                const selectedDate = dateSelect.value;
+                if (!selectedDate) {
+                    alert('Please select a date first');
+                    return;
+                }
+                
+                const slotTime = this.getAttribute('data-slot');
+                const bookedSlotsForDate = bookedSlots[selectedDate] || [];
+                
+                if (bookedSlotsForDate.includes(slotTime)) {
+                    alert('This slot is already booked');
+                    return;
+                }
+                
+                // Clear previous selection
+                timeSlots.forEach(s => s.classList.remove('selected'));
+                
+                // Mark as selected
+                this.classList.add('selected');
+                timeSlotInput.value = slotTime;
+            });
+        });
+        
+        // Form validation
+        document.getElementById('updateAppointmentForm').addEventListener('submit', function(e) {
+            if (!timeSlotInput.value) {
+                e.preventDefault();
+                alert('Please select a time slot');
+            }
+        });
+    });
+</script>
+{% endblock %}

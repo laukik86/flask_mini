@@ -40,14 +40,16 @@
                             <span class="badge bg-info">Completed</span>
                         {% endif %}
                     </td>
-                    <td>
-                        <a href="{{ url_for('view_appointment', appointment_id=appointment._id) }}" class="btn btn-sm btn-info">View</a>
-                        {% if appointment.status == 'scheduled' %}
-                            <form method="POST" action="{{ url_for('cancel_appointment', appointment_id=appointment._id) }}" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel this appointment?')">Cancel</button>
-                            </form>
-                        {% endif %}
-                    </td>
+                    <!-- In templates/dashboard.html, update the Actions column in the table -->
+<td>
+    <a href="{{ url_for('view_appointment', appointment_id=appointment._id) }}" class="btn btn-sm btn-info">View</a>
+    {% if appointment.status == 'scheduled' %}
+        <a href="{{ url_for('update_appointment', appointment_id=appointment._id) }}" class="btn btn-sm btn-warning">Update</a>
+        <form method="POST" action="{{ url_for('cancel_appointment', appointment_id=appointment._id) }}" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel this appointment?')">Cancel</button>
+        </form>
+    {% endif %}
+</td>
                 </tr>
                 {% endfor %}
             </tbody>

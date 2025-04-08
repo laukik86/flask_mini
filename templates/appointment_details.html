@@ -50,14 +50,16 @@
                 </div>
                 {% endif %}
                 
-                <div class="mt-4">
-                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
-                    {% if appointment.status == 'scheduled' and session.role == 'patient' %}
-                        <form method="POST" action="{{ url_for('cancel_appointment', appointment_id=appointment._id) }}" class="d-inline">
-                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this appointment?')">Cancel Appointment</button>
-                        </form>
-                    {% endif %}
-                </div>
+                <!-- In templates/appointment_details.html, update the button section -->
+<div class="mt-4">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+    {% if appointment.status == 'scheduled' and session.role == 'patient' %}
+        <a href="{{ url_for('update_appointment', appointment_id=appointment._id) }}" class="btn btn-warning">Update Appointment</a>
+        <form method="POST" action="{{ url_for('cancel_appointment', appointment_id=appointment._id) }}" class="d-inline">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this appointment?')">Cancel Appointment</button>
+        </form>
+    {% endif %}
+</div>
             </div>
         </div>
     </div>
