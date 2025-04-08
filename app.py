@@ -113,7 +113,7 @@ def logout():
 def dashboard():
     if session['role'] == 'patient':
         # Get user's appointments
-        user_appointments = list(appointments.find({'patient_id': session['user_id']}).sort('date', -1))
+        user_appointments = list(appointments.find({'patient_id': session['user_id']}).sort([('date', 1), ('time_slot', 1)]))
         return render_template('dashboard.html', appointments=user_appointments)
     else:
         # Get all appointments for admin/doctor
@@ -296,7 +296,7 @@ def admin_appointments():
         flash('Access denied', 'danger')
         return redirect(url_for('dashboard'))
     
-    all_appointments = list(appointments.find().sort('date', -1))
+    all_appointments = list(appointments.find().sort([('date', 1), ('time_slot', 1)]))
     return render_template('admin_appointments.html', appointments=all_appointments)
 
 # Update appointment status (for doctor/admin)
